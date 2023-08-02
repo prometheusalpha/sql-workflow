@@ -23,6 +23,6 @@ export const job = {
     {
       source: "b",
       target: "c",
-    },
+    }
   ],
 };
