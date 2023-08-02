@@ -1,9 +1,14 @@
 <script setup lang="ts">
-import HelloWorld from './components/HelloWorld.vue'
+import Sidebar from "./components/sidebar.vue";
 </script>
 
 <template>
-  <HelloWorld msg="Vite + Vue" />
+  <div class="dark:bg-[#141414] dark:text-[#E5EAF3] w-screen min-h-screen flex">
+    <Sidebar />
+    <div class="p-5 grow">
+      <router-view></router-view>
+    </div>
+  </div>
 </template>
 
 <style scoped>
