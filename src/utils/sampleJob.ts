@@ -1,4 +1,6 @@
-export const job = {
+import { Job } from "@/interface";
+
+export const job: Job = {
   name: "job",
   description: "job description",
   nodes: [
@@ -23,6 +25,6 @@ export const job = {
     {
       source: "b",
       target: "c",
-    }
+    },
   ],
 };
