@@ -13,7 +13,7 @@ defineExpose({
 
 <template>
   <div
-    class="cursor-pointer rounded bg-white border border-gray-300 dark:text-gray-950 h-20 w-20 absolute flex items-center justify-center"
+    class="cursor-pointer rounded bg-white border dark:text-gray-950 h-20 w-20 absolute flex items-center justify-center"
   >
     {{ name }}
   </div>

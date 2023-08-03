@@ -5,12 +5,13 @@ import {
   DragPayload,
   EVENT_DRAG_START,
   EVENT_ELEMENT_CLICK,
-  newInstance
+  OverlaySpec,
+  newInstance,
 } from "@jsplumb/browser-ui";
 import { onMounted, ref, watchEffect } from "vue";
-import dot from "../assets/dot.svg";
-import Node from "../components/Node.vue";
-import { job } from "./sampleJob.ts";
+import dot from "@/assets/dot.svg";
+import Node from "@/components/Node.vue";
+import { job } from "@/utils/sampleJob.ts";
 
 const name = ref(job.name);
 const description = ref(job.description);
@@ -27,28 +28,41 @@ const addNode = () => {
   nodes.value.push(node);
 };
 
+const defaultArrow: OverlaySpec = {
+  type: "PlainArrow",
+  options: { width: 10, length: 10, location: 1 },
+};
+
+const findNodeById = (id: string): Element => {
+  return nodesRef?.value?.find((node) => node.id === id)!.$el!;
+};
+
 watchEffect(() => {
   nodesRef?.value?.forEach((node) => {
-    node.$el!.classList.remove("border-4", "border-blue-500");
+    node.$el!.classList.remove("border-4", "border-blue-300");
   });
-  selectedElement.value?.classList.add("border-4", "border-blue-500");
+  selectedElement.value?.classList.add("border-4", "border-blue-300");
 });
 
 onMounted(() => {
   try {
     const instance: BrowserJsPlumbInstance = newInstance({
       container: canvas.value!,
-      dragOptions: { containment: ContainmentType.notNegative },
+      dragOptions: {
+        containment: ContainmentType.notNegative,
+        grid: { w: 20, h: 20 },
+      },
     });
     watchEffect(() => {
       nodesRef?.value?.forEach((node) => {
         instance.manage(node.$el!);
         instance.addEndpoint(node.$el!, {
+          source: true,
+          target: true,
           endpoint: "Dot",
-          reattachConnections: true
+          reattachConnections: false,
+          connectorOverlays: [defaultArrow],
         });
-        // instance.addSourceSelector(node.$el!, { anchor: "Continuous" })
-        // instance.addTargetSelector(node.$el!, { anchor: "Continuous" })
       });
     });
     instance.bind(EVENT_DRAG_START, (info: DragPayload) => {
@@ -60,9 +74,10 @@ onMounted(() => {
     const edges = job.edges;
     edges.forEach((edge) => {
       instance.connect({
-        source: nodesRef?.value?.find((node) => node.id === edge.source)!.$el!,
-        target: nodesRef?.value?.find((node) => node.id === edge.target)!.$el!,
-        anchor: "AutoDefault",
+        source: findNodeById(edge.source),
+        target: findNodeById(edge.target),
+        anchor: "Continuous",
+        overlays: [defaultArrow],
       });
     });
   } catch (error) {
@@ -82,14 +97,20 @@ onMounted(() => {
       <el-input v-model="description" placeholder="Description" />
     </div>
     <el-button type="primary" @click="addNode()">Add node</el-button>
-    <div class="grow bg-white bg-repeat bg-center overflow-hidden" :style="`background-image: url(${dot})`">
+    <div
+      class="grow bg-white bg-repeat bg-center overflow-hidden"
+      :style="`background-image: url(${dot})`"
+    >
       <div :class="`relative grow`" ref="canvas">
-        <Node :name="node.name" :id="node.id" v-for="node in nodes" ref="nodesRef" />
-        <!-- <div class="absolute" v-for="node in nodes" ref="nodesRef">{{ node.name }}</div> -->
+        <Node
+          :name="node.name"
+          :id="node.id"
+          v-for="node in nodes"
+          ref="nodesRef"
+        />
       </div>
     </div>
   </div>
 </template>
 
-<style>
-</style>
+<style></style>
