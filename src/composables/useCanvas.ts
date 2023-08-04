@@ -20,30 +20,32 @@ export function useCanvas(jobRef: Ref<Job>) {
   const job = jobRef.value;
   const instanceRef = ref<BrowserJsPlumbInstance>();
   const selectedElement = ref<Element>();
-  const els = ref(job.nodes);
+  const els = ref<NodeData[]>(job.nodes);
+  const edges: EdgeData[] = job.edges;
   const nodesRef = ref<InstanceType<typeof Node>[] | null>([]);
+  const instance = computed(() => instanceRef.value as BrowserJsPlumbInstance);
 
   const addNode = () => {
     const node = {
       id: "node-1",
-      name: "Node 1",
+      name: "New Node",
     };
     els.value.push(node);
   };
 
   const deleteNode = () => {
-    console.log(selectedElement.value);
-    const selectedElementId = selectedElement.value?.id;
-    if (selectedElementId) {
-      els.value = els.value.filter((el) => el.id !== selectedElementId);
-    }
+    nodesRef.value = nodesRef.value!.filter(
+      (node) => node.$el !== selectedElement.value
+    );
+    instanceRef.value?.unmanage(selectedElement.value!);
+    selectedElement.value?.remove();
   };
 
   watchEffect(() => {
     nodesRef?.value?.forEach((node) => {
-      node.$el!.classList.remove("border-4", "border-blue-300");
+      node.$el!.classList.remove("ring-8", "ring-gray-100");
     });
-    selectedElement.value?.classList.add("border-4", "border-blue-300");
+    selectedElement.value?.classList.add("ring-8", "ring-gray-100");
   });
 
   const findNodeById = (id: string): Element => {
@@ -58,25 +60,14 @@ export function useCanvas(jobRef: Ref<Job>) {
         grid: { w: 20, h: 20 },
       },
     });
-    watchEffect(() => {
-      nodesRef?.value?.forEach((node) => {
-        instance.value.manage(node.$el!);
-        instance.value.addEndpoint(node.$el!, {
-          source: true,
-          target: true,
-          endpoint: "Dot",
-          reattachConnections: false,
-          connectorOverlays: [defaultArrow],
-        });
-      });
-    });
-    instanceRef.value.bind(EVENT_DRAG_START, (info: DragPayload) => {
+    instanceRef.value?.bind(EVENT_DRAG_START, (info: DragPayload) => {
       selectedElement.value = info.el as HTMLElement;
     });
-    instanceRef.value.bind(EVENT_ELEMENT_CLICK, (info: Element) => {
+
+    instanceRef.value?.bind(EVENT_ELEMENT_CLICK, (info: Element) => {
       selectedElement.value = info;
     });
-    const edges = job.edges;
+
     edges.forEach((edge) => {
       instanceRef.value?.connect({
         source: findNodeById(edge.source),
@@ -87,11 +78,29 @@ export function useCanvas(jobRef: Ref<Job>) {
     });
   };
 
-  const instance = computed(() => instanceRef.value as BrowserJsPlumbInstance);
+  watchEffect(() => {
+    nodesRef?.value?.forEach((node) => {
+      instance.value.manage(node.$el!);
+      instance.value.addEndpoint(node.$el!, {
+        target: true,
+        anchor: "Left",
+        endpoint: { type: "Rectangle", options: { width: 10, height: 25 } },
+        reattachConnections: false,
+        connectorOverlays: [defaultArrow],
+      });
+      instance.value.addEndpoint(node.$el!, {
+        source: true,
+        anchor: "Right",
+        endpoint: { type: "Dot", options: { radius: 10 } },
+        reattachConnections: false,
+        connectorOverlays: [defaultArrow],
+      });
+    });
+  });
 
   return {
     init,
-    instance,
+    instanceRef,
     selectedElement,
     nodesRef,
     els,
