@@ -1,29 +1,61 @@
 <script setup lang="ts">
 import dot from "@/assets/dot.svg";
 import { job } from "@/utils/sampleJob.ts";
-import "@vue-flow/controls/dist/style.css";
-import { Element, VueFlow } from "@vue-flow/core";
 import { Controls } from "@vue-flow/controls";
+import "@vue-flow/controls/dist/style.css";
+import { Edge, VueFlow, useVueFlow } from "@vue-flow/core";
+import { v4 as uuidv4 } from "uuid";
+import { HandleProps } from "@vue-flow/core";
 import { ref } from "vue";
 
 const jobRef = ref(job);
-const elements = ref<Element[]>([
-  { id: "1", type: "input", label: "Node 1", position: { x: 250, y: 5 } },
+
+const { addEdges, addNodes, fitView } = useVueFlow({
+  nodes: [{ id: "1", label: "Node 1", position: { x: 250, y: 5 } },
 
   // Default nodes, you can omit `type: 'default'`
   { id: "2", label: "Node 2", position: { x: 100, y: 100 } },
   { id: "3", label: "Node 3", position: { x: 400, y: 100 } },
 
   // An output node, specified by using `type: 'output'`
-  { id: "4", type: "output", label: "Node 4", position: { x: 400, y: 200 } },
+  { id: "5", label: "Node 5", position: { x: 100, y: 200 } },
+  { id: "4", label: "Node 4", position: { x: 400, y: 300 } },
+  ],
+  edges: [
+    { id: "e1-3", source: "1", target: "3", sourceHandle: "right" },
+    {
+      id: "e4-5",
+      source: "5",
+      target: "4",
+    },
 
-  // Edges
-  // Most basic edge, only consists of an id, source-id and target-id
-  { id: "e1-3", source: "1", target: "3" },
+    // An animated edge
+    { id: "e1-2", source: "1", target: "2", animated: true },
+    { id: "e3-4", source: "3", target: "4", animated: true },
+    { id: "e2-5", source: "2", target: "5", animated: true },
+  ]
+})
 
-  // An animated edge
-  { id: "e1-2", source: "1", target: "2", animated: true },
-]);
+const connectStart = (payload: any) => {
+  addEdges({
+    id: uuidv4(),
+    source: payload.source,
+    sourceHandle: payload.sourceHandle,
+    target: payload.target,
+    targetHandle: payload.targetHandle,
+    animated: true,
+  } as Edge);
+};
+
+const addNode = () => {
+  addNodes({
+    id: uuidv4(),
+    label: "Node 6",
+    position: { x: 100, y: 400 },
+  });
+  fitView();
+};
+
 </script>
 
 <template>
@@ -36,17 +68,17 @@ const elements = ref<Element[]>([
       <span class="pr-5">Description</span>
       <el-input v-model="jobRef.description" placeholder="Description" />
     </div>
-    <el-row>
-      <!-- <el-button type="primary" @click="addNode()">Add node</el-button>
-      <el-button type="danger" @click="deleteNode()">Delete node</el-button> -->
+    <el-row class="absolute">
+      <el-button type="primary" @click="addNode()">Add node</el-button>
+      <!-- <el-button type="danger" @click="deleteNode()">Delete node</el-button> -->
     </el-row>
-    <div
-      class="grow bg-white bg-repeat bg-center overflow-hidden"
-      :style="`background-image: url(${dot})`"
-    >
-      <VueFlow fit-view-on-init v-model="elements"> <Controls /></VueFlow>
+    <div class="grow bg-white bg-repeat bg-center overflow-hidden" :style="`background-image: url(${dot})`">
+      <VueFlow fit-view-on-init v-on:connect="connectStart">
+        <Controls />
+      </VueFlow>
     </div>
   </div>
 </template>
 
-<style></style>
+<style>
+</style>
