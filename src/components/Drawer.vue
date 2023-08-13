@@ -1,13 +1,16 @@
 <script lang="ts" setup>
 import { Setting } from "@element-plus/icons-vue";
-
-const props = defineProps({
-  opened: Boolean
-})
-
 import { ref } from 'vue'
-const drawer = ref(props.opened)
+
+const drawer = ref(false)
 const openDrawer = () => drawer.value = true
+
+interface JobMetadata{
+  name: string
+  description: string
+}
+
+defineProps<JobMetadata>()
 </script>
 
 <template>
@@ -18,5 +21,7 @@ const openDrawer = () => drawer.value = true
   </el-button>
   <el-drawer v-model="drawer" :with-header="false">
     <span>Hi there!</span>
+    {{ name }}
+    {{ description }}
   </el-drawer>
 </template>
